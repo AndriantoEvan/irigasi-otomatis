@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#2f4a3c">
+<title>Irigasi Pot</title>
+<style>
+:root{
+  --ink:#1c2620;--paper:#f2f4ee;--panel:#fff;--line:#dde2d8;
+  --green:#2f4a3c;--green-soft:#e4ebe3;--water:#3b7ea1;
+  --danger:#a13b3b;--muted:#68776d;--radius:10px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--paper);color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+  line-height:1.4;-webkit-font-smoothing:antialiased;
+}
+button,input{font:inherit}
+button{touch-action:manipulation}
+.wrap{width:min(100%,1400px);margin:auto;padding:18px 24px 34px}
+header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}
+h1{font-size:19px;font-weight:700;margin:0;letter-spacing:-.01em}
+.status-pill{display:flex;align-items:center;gap:6px;font-size:12px;color:#5b6b60;white-space:nowrap}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--green);flex:0 0 auto}
+.dot.off{background:#b6b6b6}
+.icon-btn{
+  width:38px;height:38px;border:1px solid var(--line);border-radius:9px;
+  background:var(--panel);color:var(--ink);display:grid;place-items:center;cursor:pointer;
+}
+.icon-btn:active,.btn:active{opacity:.82}
+.icon-btn svg{width:18px;height:18px}
+.hero{background:var(--green);color:#f2f4ee;border-radius:var(--radius);padding:23px 18px;margin-bottom:12px}
+.hero .label{font-size:13px;color:#c3d0c5;margin:0 0 5px}
+.countdown{font-size:clamp(32px,9vw,40px);font-weight:700;letter-spacing:-.02em;margin:0 0 3px;font-variant-numeric:tabular-nums}
+.next-time{font-size:13px;color:#c3d0c5;margin:0 0 18px}
+.btn-water{
+  width:100%;background:var(--water);color:#fff;border:0;border-radius:8px;
+  padding:13px;font-size:15px;font-weight:600;cursor:pointer;display:flex;
+  align-items:center;justify-content:center;gap:8px;min-height:46px
+}
+.btn-water:disabled,.btn-save:disabled{opacity:.45;cursor:default}
+.btn-water.is-watering{background:#9a9f9b;color:#fff;opacity:1;cursor:default}
+.btn-water svg{width:16px;height:16px}
+.status-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px}
+.status-card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:11px 13px;min-width:0}
+.status-card .k{font-size:11.5px;color:var(--muted);margin:0 0 3px}
+.status-card .v{font-size:14px;font-weight:600;margin:0;overflow:hidden;text-overflow:ellipsis}
+.section-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin:0 0 9px}
+.section-head h2{font-size:15px;font-weight:700;margin:0}
+.hint{font-size:11.5px;color:var(--muted);text-align:right}
+.schedule-list{display:flex;flex-direction:column;gap:8px;margin-bottom:10px}
+.slot{
+  background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+  padding:9px;display:grid;grid-template-columns:minmax(92px,110px) 1fr 34px;
+  align-items:center;gap:8px
+}
+.slot input[type=time],.slot input[type=number],.setting input{
+  border:0;background:var(--green-soft);border-radius:7px;color:var(--ink);
+  min-height:40px;outline:0
+}
+.slot input[type=time]{width:100%;padding:7px 8px;font-size:15px;font-weight:600}
+.dur{display:flex;align-items:center;justify-content:flex-start;gap:6px;font-size:13px;color:#5b6b60;min-width:0}
+.slot input[type=number]{width:52px;padding:7px 5px;text-align:center;font-size:14px}
+.slot input:focus,.setting input:focus{box-shadow:0 0 0 2px #b8c8bb}
+.remove{
+  width:34px;height:34px;border:0;border-radius:7px;background:transparent;color:var(--danger);
+  font-size:21px;line-height:1;cursor:pointer
+}
+.remove:active{background:#f7eaea}
+.empty-note{font-size:13px;color:var(--muted);padding:13px 4px;text-align:center}
+.btn-add{
+  width:100%;background:transparent;border:1.5px dashed #b6c2b3;color:var(--green);
+  border-radius:var(--radius);padding:11px;font-size:14px;font-weight:600;cursor:pointer;margin-bottom:12px
+}
+.save-bar{display:flex;align-items:center;gap:10px}
+.btn-save{
+  flex:1;background:var(--ink);color:#fff;border:0;border-radius:8px;
+  padding:12px;min-height:44px;font-size:14.5px;font-weight:600;cursor:pointer
+}
+.toast{font-size:12.5px;color:var(--green);font-weight:600;opacity:0;transition:opacity .2s;white-space:nowrap}
+.toast.show{opacity:1}
+footer{text-align:center;font-size:11px;color:#8b9a8f;margin-top:23px}
+.modal-backdrop{
+  position:fixed;inset:0;background:rgba(15,25,18,.35);display:none;align-items:flex-end;
+  justify-content:center;padding:10px;z-index:20
+}
+.modal-backdrop.show{display:flex}
+.modal{
+  width:min(100%,520px);background:var(--panel);border-radius:14px;padding:16px;
+  box-shadow:0 12px 35px rgba(0,0,0,.18);max-height:90vh;overflow:auto
+}
+.modal-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px}
+.modal h2{font-size:17px;margin:0}
+.close{background:transparent;border:0;font-size:24px;line-height:1;cursor:pointer;color:var(--muted);padding:3px 6px}
+.setting{margin-bottom:14px}
+.setting label{display:block;font-size:13px;font-weight:600;margin-bottom:6px}
+.setting small{display:block;color:var(--muted);font-size:11.5px;margin-top:5px}
+.setting input{width:100%;padding:9px 10px;font-size:14px;background:#f5f7f3}
+.modal-actions{display:flex;gap:8px;margin-top:15px}
+.btn{border:0;border-radius:8px;min-height:42px;padding:10px 13px;cursor:pointer;font-weight:600;font-size:14px}
+.btn-secondary{background:var(--green-soft);color:var(--green);flex:1}
+.btn-primary{background:var(--ink);color:#fff;flex:1}
+@media (min-width:700px){.wrap{padding-top:32px;padding-left:32px;padding-right:32px}.modal-backdrop{align-items:center}}
+@media (max-width:350px){
+  .wrap{padding-left:10px;padding-right:10px}
+  .slot{grid-template-columns:86px 1fr 32px;gap:6px}
+  .dur{font-size:12px}.slot input[type=number]{width:47px}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>🌱 Irigasi Pot</h1>
+      <div class="status-pill" style="margin-top:3px">
+        <span class="dot" id="wifiDot"></span><span id="wifiLabel">memuat…</span>
+      </div>
+    </div>
+    <button class="icon-btn" id="settingsBtn" aria-label="Buka pengaturan" title="Pengaturan">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M12 15.2a3.2 3.2 0 1 0 0-6.4 3.2 3.2 0 0 0 0 6.4Z"/>
+        <path d="m19.4 15 .1.1a1.7 1.7 0 0 1-2.4 2.4l-.1-.1a1.7 1.7 0 0 0-2.9 1.2v.2a1.7 1.7 0 0 1-3.4 0v-.2a1.7 1.7 0 0 0-2.9-1.2l-.1.1a1.7 1.7 0 0 1-2.4-2.4l.1-.1A1.7 1.7 0 0 0 6.2 12a1.7 1.7 0 0 0-1.7-1.7h-.2a1.7 1.7 0 0 1 0-3.4h.2A1.7 1.7 0 0 0 5.7 4l-.1-.1A1.7 1.7 0 0 1 8 1.5l.1.1A1.7 1.7 0 0 0 11 0.4v-.2"/>
+      </svg>
+    </button>
+  </header>
+
+  <div class="hero">
+    <p class="label">Penyiraman berikutnya dalam</p>
+    <p class="countdown" id="countdown">—</p>
+    <p class="next-time" id="nextTime">Memuat jadwal…</p>
+    <button class="btn-water" id="waterNowBtn">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2S5 10.5 5 15a7 7 0 0 0 14 0c0-4.5-7-13-7-13Z"/></svg>
+      <span id="waterBtnText">Siram sekarang</span>
+    </button>
+  </div>
+
+  <div class="status-row">
+    <div class="status-card"><p class="k">Terakhir disiram</p><p class="v" id="lastWatered">—</p></div>
+    <div class="status-card"><p class="k">Jadwal aktif</p><p class="v" id="slotCount">0</p></div>
+  </div>
+
+  <div class="section-head">
+    <h2>Jadwal penyiraman</h2><span class="hint">Simpan setelah mengubah</span>
+  </div>
+  <div class="schedule-list" id="scheduleList"></div>
+  <button class="btn-add" id="addSlotBtn">+ Tambah jadwal</button>
+
+  <div class="save-bar">
+    <button class="btn-save" id="saveBtn" disabled>Simpan jadwal</button>
+    <span class="toast" id="toast" role="status"></span>
+  </div>
+  <footer></footer>
+</div>
+
+<div class="modal-backdrop" id="settingsModal" aria-hidden="true">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+    <div class="modal-head">
+      <h2 id="settingsTitle">Pengaturan</h2>
+      <button class="close" id="closeSettings" aria-label="Tutup">×</button>
+    </div>
+    <div class="setting">
+      <label for="manualWaterDuration">Durasi “Siram sekarang”</label>
+      <input id="manualWaterDuration" type="number" min="1" max="600" step="1" inputmode="numeric" value="8">
+      <small>Pompa akan menyala selama durasi ini saat tombol “Siram sekarang” ditekan.</small>
+    </div>
+    <div class="setting">
+      <label for="maxDuration">Batas maksimum pompa menyala</label>
+      <input id="maxDuration" type="number" min="1" max="600" step="1" inputmode="numeric" value="60">
+      <small>Durasi maksimum untuk setiap penyiraman. Nilai awal 60 detik.</small>
+    </div>
+    <div class="setting">
+      <label for="ntfyUrl">URL ntfy</label>
+      <input id="ntfyUrl" type="url" inputmode="url" autocomplete="off"
+             placeholder="ntfy.sh/topic-unik atau https://ntfy.sh/topic-unik">
+      <small>Tulis ntfy.sh/nama-topic atau URL lengkap dengan http:// / https://.</small>
+      <button class="btn btn-secondary" id="testNtfyBtn" type="button" style="width:100%;margin-top:8px">Kirim tes notifikasi</button>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" id="cancelSettings">Batal</button>
+      <button class="btn btn-primary" id="saveSettings">Simpan pengaturan</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+"use strict";
+
+var API={status:"/api/status",schedule:"/api/schedule",waterNow:"/api/water-now",config:"/api/config",ntfyTest:"/api/ntfy-test"};
+var demo={
+  wifiConnected:true,lastWateredText:"Hari ini, 06:02",
+  nextWaterEpoch:Math.floor(Date.now()/1000)+3*3600+12*60,
+  slots:[{time:"06:00",duration:8},{time:"17:00",duration:8}],
+  ntfyUrl:"https://ntfy.sh/irigasi-demo",maxDuration:60
+};
+var state={slots:[],nextWaterRemainingSec:null,nextWaterLabel:"",dirty:false,config:{ntfyUrl:"",maxDuration:60,manualWaterDuration:8},usingDemo:false,pumpOn:false,wateringRemainingSec:0};
+var els={
+ countdown:document.getElementById("countdown"),nextTime:document.getElementById("nextTime"),
+ lastWatered:document.getElementById("lastWatered"),slotCount:document.getElementById("slotCount"),
+ wifiDot:document.getElementById("wifiDot"),wifiLabel:document.getElementById("wifiLabel"),
+ list:document.getElementById("scheduleList"),addBtn:document.getElementById("addSlotBtn"),
+ saveBtn:document.getElementById("saveBtn"),toast:document.getElementById("toast"),
+ waterNowBtn:document.getElementById("waterNowBtn"),waterBtnText:document.getElementById("waterBtnText"),
+ settingsBtn:document.getElementById("settingsBtn"),modal:document.getElementById("settingsModal"),
+ closeSettings:document.getElementById("closeSettings"),cancelSettings:document.getElementById("cancelSettings"),
+ saveSettings:document.getElementById("saveSettings"),ntfyUrl:document.getElementById("ntfyUrl"),
+ manualWaterDuration:document.getElementById("manualWaterDuration"),
+ maxDuration:document.getElementById("maxDuration"),testNtfyBtn:document.getElementById("testNtfyBtn")
+};
+
+function pad(n){return n<10?"0"+n:""+n}
+function normalizeNtfyUrl(raw){
+  raw=(raw||"").trim();
+  if(!raw)return "";
+  if(/^https?:\/\//i.test(raw))return raw;
+  if(/^ntfy\.sh\//i.test(raw))return "https://"+raw;
+  if(raw.indexOf("/")<0)return "https://ntfy.sh/"+raw;
+  return "https://"+raw;
+}
+function clampDuration(v){
+  v=parseInt(v,10); if(!isFinite(v))v=1;
+  return Math.max(1,Math.min(state.config.maxDuration||60,v));
+}
+function fmtCountdown(sec){
+  sec=Math.max(0,Math.floor(Number(sec)||0));
+  if(sec<10)return "sebentar lagi";
+  if(sec<60)return sec+" detik lagi";
+  var h=Math.floor(sec/3600),m=Math.floor((sec%3600)/60);
+  if(h>0){
+    if(m>0)return h+" jam "+m+" menit lagi";
+    return h+" jam lagi";
+  }
+  return m+" menit lagi";
+}
+function showToast(text){
+  els.toast.textContent=text;els.toast.classList.add("show");
+  clearTimeout(showToast.t);showToast.t=setTimeout(function(){els.toast.classList.remove("show")},1800);
+}
+function markDirty(){
+  state.dirty=true;els.saveBtn.disabled=false;
+}
+function renderStatus(data){
+  els.wifiDot.classList.toggle("off",!data.wifiConnected);
+  els.wifiLabel.textContent=data.wifiConnected
+    ? (data.timeSynced===false ? "terhubung · waktu belum sinkron" : "terhubung")
+    : "terputus";
+  els.lastWatered.textContent=data.lastWateredText||"—";
+  state.nextWaterRemainingSec=Number(data.nextWaterInSec)||0;
+  state.nextWaterLabel=data.nextWaterLabel||"";
+  state.pumpOn=!!data.pumpOn;
+  state.wateringRemainingSec=Number(data.wateringRemainingSec)||0;
+  renderWaterButton();
+  tickCountdown();
+}
+function tickCountdown(){
+  if(state.nextWaterRemainingSec==null || state.nextWaterRemainingSec<=0){
+    els.countdown.textContent=state.nextWaterLabel?"segera":"—";
+    els.nextTime.textContent=state.nextWaterLabel?"Terjadwal "+state.nextWaterLabel:"Belum ada jadwal aktif";
+    return;
+  }
+  els.countdown.textContent=fmtCountdown(state.nextWaterRemainingSec);
+  els.nextTime.textContent=state.nextWaterLabel?"Terjadwal "+state.nextWaterLabel:"Jadwal berikutnya";
+}
+function renderWaterButton(){
+  if(state.pumpOn){
+    els.waterNowBtn.disabled=true;
+    els.waterNowBtn.classList.add("is-watering");
+    els.waterBtnText.textContent="Sedang menyiram…";
+  }else{
+    els.waterNowBtn.disabled=false;
+    els.waterNowBtn.classList.remove("is-watering");
+    els.waterBtnText.textContent="Siram sekarang";
+  }
+}
+function renderSlots(){
+  els.list.innerHTML="";
+  if(!state.slots.length){
+    var p=document.createElement("p");p.className="empty-note";
+    p.textContent="Belum ada jadwal. Tambah jadwal di bawah.";els.list.appendChild(p);
+  }
+  state.slots.forEach(function(slot,i){
+    var row=document.createElement("div");row.className="slot";
+    var time=document.createElement("input");time.type="time";time.value=slot.time||"12:00";
+    time.setAttribute("aria-label","Waktu jadwal");
+    time.addEventListener("change",function(){state.slots[i].time=time.value;markDirty()});
+    var dur=document.createElement("div");dur.className="dur";
+    var di=document.createElement("input");di.type="number";di.min="1";di.max=String(state.config.maxDuration||60);
+    di.inputMode="numeric";di.value=clampDuration(slot.duration);
+    di.setAttribute("aria-label","Durasi siram dalam detik");
+    di.addEventListener("change",function(){
+      var v=clampDuration(di.value);di.value=v;state.slots[i].duration=v;markDirty();
+    });
+    dur.appendChild(di);dur.appendChild(document.createTextNode(" detik"));
+    var rm=document.createElement("button");rm.className="remove";rm.type="button";
+    rm.setAttribute("aria-label","Hapus jadwal");rm.textContent="×";
+    rm.addEventListener("click",function(){state.slots.splice(i,1);markDirty();renderSlots()});
+    row.appendChild(time);row.appendChild(dur);row.appendChild(rm);els.list.appendChild(row);
+  });
+  els.slotCount.textContent=state.slots.length;
+}
+function normalizeSlots(slots){
+  return (Array.isArray(slots)?slots:[]).map(function(s){
+    return {time:/^\d\d:\d\d$/.test(s.time)?s.time:"12:00",duration:clampDuration(s.duration)};
+  }).sort(function(a,b){return a.time.localeCompare(b.time)});
+}
+function validSlots(){
+  var seen={};
+  for(var i=0;i<state.slots.length;i++){
+    var s=state.slots[i];
+    if(!/^\d\d:\d\d$/.test(s.time))return false;
+    if(seen[s.time])return false;
+    seen[s.time]=true;
+    if(clampDuration(s.duration)!==Number(s.duration))return false;
+  }
+  return true;
+}
+function fetchJson(url,options,timeout){
+  timeout=timeout||5000;
+  var ctrl=window.AbortController?new AbortController():null,timer;
+  if(ctrl){options=options||{};options.signal=ctrl.signal;timer=setTimeout(function(){ctrl.abort()},timeout)}
+  return fetch(url,options).then(function(r){
+    if(timer)clearTimeout(timer);if(!r.ok)throw new Error("HTTP "+r.status);return r.json();
+  },function(e){if(timer)clearTimeout(timer);throw e});
+}
+var statusPollBusy=false;
+function pollStatus(){
+  if(statusPollBusy)return;
+  statusPollBusy=true;
+  fetchJson(API.status,{},4000).then(function(data){
+    state.usingDemo=false;
+    renderStatus(data);
+  }).catch(function(){
+    state.usingDemo=true;
+    renderStatus({wifiConnected:false,lastWateredText:"—",nextWaterInSec:0,nextWaterLabel:"",pumpOn:false,wateringRemainingSec:0});
+  }).finally(function(){
+    statusPollBusy=false;
+    setTimeout(pollStatus,2500);
+  });
+}
+function loadStatus(){
+  return pollStatus();
+}
+function loadSchedule(){
+  fetchJson(API.schedule).then(function(data){
+    state.usingDemo=false;state.slots=normalizeSlots(data.slots);renderSlots();
+  }).catch(function(){
+    state.usingDemo=true;state.slots=normalizeSlots(demo.slots);renderSlots();
+  });
+}
+function loadConfig(){
+  fetchJson(API.config).then(function(data){
+    state.config.ntfyUrl=data.ntfyUrl||"";
+    state.config.maxDuration=Number(data.maxDuration)||60;
+    state.config.manualWaterDuration=Math.min(Number(data.manualWaterDuration)||8,state.config.maxDuration);
+    updateDurationLimits();
+  }).catch(function(){
+    var saved=null;try{saved=JSON.parse(localStorage.getItem("irigasiConfig")||"null")}catch(e){}
+    var c=saved||demo;
+    state.config.ntfyUrl=c.ntfyUrl||"";
+    state.config.maxDuration=Number(c.maxDuration)||60;
+    state.config.manualWaterDuration=Math.min(Number(c.manualWaterDuration)||8,state.config.maxDuration);
+    updateDurationLimits();
+  });
+}
+function updateDurationLimits(){
+  var max=Number(state.config.maxDuration)||60;
+  document.querySelectorAll('.slot input[type=number]').forEach(function(x){x.max=String(max)});
+  els.manualWaterDuration.max=String(max);
+  if(Number(els.manualWaterDuration.value)>max)els.manualWaterDuration.value=String(max);
+}
+function openSettings(){
+  els.manualWaterDuration.value=String(state.config.manualWaterDuration||8);
+  els.maxDuration.value=String(state.config.maxDuration||60);
+  els.ntfyUrl.value=state.config.ntfyUrl||"";
+  els.modal.classList.add("show");els.modal.setAttribute("aria-hidden","false");els.manualWaterDuration.focus();
+}
+function closeSettings(){
+  els.modal.classList.remove("show");els.modal.setAttribute("aria-hidden","true");
+}
+function saveConfig(){
+  var url=normalizeNtfyUrl(els.ntfyUrl.value);
+  var max=Number(els.maxDuration.value);
+  var manual=Number(els.manualWaterDuration.value);
+  if(!isFinite(max)||max<1||max>600){showToast("Batas maksimum harus 1–600 detik");return}
+  if(!isFinite(manual)||manual<1||manual>max){showToast("Durasi “Siram sekarang” harus 1–"+max+" detik");return}
+  max=Math.round(max);manual=Math.round(manual);
+  var payload={ntfyUrl:url,maxDuration:max,manualWaterDuration:manual};
+  els.saveSettings.disabled=true;
+  fetchJson(API.config,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)},4000)
+  .then(function(){
+    state.config=payload;updateDurationLimits();renderSlots();closeSettings();showToast("Pengaturan tersimpan");
+  })
+  .catch(function(){
+    try{localStorage.setItem("irigasiConfig",JSON.stringify(payload))}catch(e){}
+    state.config=payload;updateDurationLimits();renderSlots();closeSettings();
+    showToast("Disimpan lokal (ESP belum menerima pengaturan)");
+  })
+  .finally(function(){els.saveSettings.disabled=false});
+}
+els.addBtn.addEventListener("click",function(){
+  if(state.slots.length>=12){showToast("Maksimal 12 jadwal");return}
+  state.slots.push({time:"12:00",duration:Math.min(8,state.config.maxDuration||60)});
+  markDirty();renderSlots();
+});
+els.saveBtn.addEventListener("click",function(){
+  if(!validSlots()){showToast("Periksa waktu/durasi jadwal");return}
+  state.slots=normalizeSlots(state.slots);renderSlots();
+  els.saveBtn.disabled=true;
+  fetchJson(API.schedule,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({slots:state.slots})},4000)
+  .then(function(){
+    state.dirty=false;showToast("Jadwal tersimpan");loadStatus();
+  })
+  .catch(function(){showToast("Gagal simpan, coba lagi");els.saveBtn.disabled=false});
+});
+els.waterNowBtn.addEventListener("click",function(){
+  if(state.pumpOn)return;
+  if(!confirm("Siram tanaman sekarang?"))return;
+  state.pumpOn=true;
+  state.wateringRemainingSec=Number(state.config.manualWaterDuration)||8;
+  renderWaterButton();
+  fetchJson(API.waterNow,{method:"POST"},4000)
+  .then(function(data){
+    state.pumpOn=true;
+    state.wateringRemainingSec=Number(data.wateringRemainingSec)||state.config.manualWaterDuration||8;
+    showToast("Penyiraman dimulai");
+    setTimeout(loadStatus,250);
+  })
+  .catch(function(){
+    state.pumpOn=false;state.wateringRemainingSec=0;renderWaterButton();
+    showToast("Gagal memulai penyiraman");
+  });
+});
+els.testNtfyBtn.addEventListener("click",function(){
+  var url=normalizeNtfyUrl(els.ntfyUrl.value);
+  if(!url){
+    showToast("Isi URL ntfy terlebih dahulu");
+    return;
+  }
+
+  var max=Number(els.maxDuration.value)||60;
+  var manual=Number(els.manualWaterDuration.value)||8;
+  if(manual>max){
+    showToast("Durasi “Siram sekarang” tidak boleh melebihi batas maksimum");
+    return;
+  }
+
+  els.ntfyUrl.value=url;
+  els.testNtfyBtn.disabled=true;
+  els.testNtfyBtn.textContent="Mengirim…";
+
+  fetch(API.config,{
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({
+      ntfyUrl:url,
+      maxDuration:max,
+      manualWaterDuration:manual
+    })
+  })
+  .then(function(r){
+    if(!r.ok)throw new Error("Gagal menyimpan URL ntfy");
+    return fetch(API.ntfyTest,{method:"POST"});
+  })
+  .then(function(r){
+    return r.json().catch(function(){return {}}).then(function(data){
+      if(!r.ok)throw new Error(data.error||"ntfy gagal");
+      return data;
+    });
+  })
+  .then(function(){showToast("Tes notifikasi berhasil dikirim")})
+  .catch(function(e){showToast(e.message||"Tes ntfy gagal")})
+  .finally(function(){
+    els.testNtfyBtn.disabled=false;
+    els.testNtfyBtn.textContent="Kirim tes notifikasi";
+  });
+});
+els.settingsBtn.addEventListener("click",openSettings);
+els.closeSettings.addEventListener("click",closeSettings);
+els.cancelSettings.addEventListener("click",closeSettings);
+els.saveSettings.addEventListener("click",saveConfig);
+els.modal.addEventListener("click",function(e){if(e.target===els.modal)closeSettings()});
+document.addEventListener("keydown",function(e){if(e.key==="Escape")closeSettings()});
+
+loadStatus();loadSchedule();loadConfig();
+setInterval(function(){
+  if(state.nextWaterRemainingSec!=null && state.nextWaterRemainingSec>0)state.nextWaterRemainingSec--;
+  tickCountdown();
+  if(state.wateringRemainingSec>0)state.wateringRemainingSec--;
+},1000);
+
+})();
+</script>
+</body>
+</html>

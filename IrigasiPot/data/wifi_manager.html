@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#2f4a3c">
+<title>Wi-Fi · Irigasi Pot</title>
+<style>
+:root{
+  --ink:#1c2620;--paper:#f2f4ee;--panel:#fff;--line:#dde2d8;
+  --green:#2f4a3c;--green-soft:#e4ebe3;--water:#3b7ea1;
+  --danger:#a13b3b;--muted:#68776d;--radius:10px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--paper);color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+  line-height:1.4;-webkit-font-smoothing:antialiased
+}
+button,input{font:inherit}
+button{touch-action:manipulation}
+.wrap{width:min(100%,640px);margin:auto;padding:18px 18px 34px}
+header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}
+.brand{display:flex;align-items:center;gap:10px}
+.brand-mark{
+  width:38px;height:38px;border-radius:9px;background:var(--green);
+  color:#f2f4ee;display:grid;place-items:center;font-size:19px
+}
+h1{font-size:19px;font-weight:700;margin:0}
+.subtitle{font-size:12px;color:var(--muted);margin:2px 0 0}
+.status-pill{display:flex;align-items:center;gap:6px;font-size:12px;color:#5b6b60;white-space:nowrap}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--green)}
+.dot.off{background:#b6b6b6}
+.card{
+  background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+  padding:18px;margin-bottom:14px
+}
+.card-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:13px}
+.card-head h2{font-size:15px;margin:0}
+.card-head p{font-size:11.5px;color:var(--muted);margin:2px 0 0}
+.btn{
+  border:0;border-radius:8px;min-height:42px;padding:10px 14px;cursor:pointer;
+  font-weight:600;font-size:14px
+}
+.btn-primary{background:var(--ink);color:#fff}
+.btn-secondary{background:var(--green-soft);color:var(--green)}
+.btn-danger{background:transparent;color:var(--danger)}
+.btn:disabled{opacity:.45;cursor:default}
+.btn-scan{
+  border:1px solid var(--line);border-radius:7px;background:#fff;color:var(--green);
+  min-height:34px;padding:6px 12px;font-size:12.5px;font-weight:600;cursor:pointer;
+  display:flex;align-items:center;gap:7px;white-space:nowrap
+}
+.btn-scan:disabled{opacity:.5;cursor:default}
+.spin{width:12px;height:12px;border:2px solid var(--green-soft);border-top-color:var(--green);
+  border-radius:50%;animation:spin .7s linear infinite;display:none;flex:0 0 auto}
+.btn-scan.loading .spin{display:inline-block}
+.btn-scan.loading .scan-label{display:none}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.net-list{display:flex;flex-direction:column;gap:8px}
+.net-item{border:1px solid var(--line);border-radius:9px;background:#fff;overflow:hidden}
+.net-item.connected{border-color:#9fb79f;background:#f4f8f3}
+.net-head{
+  width:100%;border:0;background:transparent;padding:11px 12px;display:flex;
+  align-items:center;gap:11px;cursor:pointer;text-align:left
+}
+.net-head:hover{background:#fbfcfa}
+.sig{flex:0 0 auto;color:var(--muted)}
+.sig svg{width:18px;height:16px;display:block}
+.net-info{flex:1;min-width:0}
+.net-name{font-size:14px;font-weight:650;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:flex;align-items:center;gap:6px}
+.net-meta{font-size:11.5px;color:var(--muted);margin-top:2px}
+.badge{
+  font-size:10.5px;font-weight:700;padding:2px 6px;border-radius:20px;
+  background:var(--green-soft);color:var(--green);flex:0 0 auto
+}
+.badge.live{background:#dcecdc;color:#2f6b3f}
+.lock{flex:0 0 auto;color:var(--muted);font-size:12px}
+.chevron{color:#8b978e;font-size:19px;flex:0 0 auto;transition:transform .15s}
+.net-item.open .chevron{transform:rotate(90deg)}
+.net-panel{display:none;padding:0 12px 13px}
+.net-item.open .net-panel{display:block}
+.net-panel .field{margin:0 0 10px}
+.net-panel label{display:block;font-size:12px;font-weight:600;margin-bottom:5px;color:#3a463d}
+.password-wrap{position:relative}
+.password-wrap input{padding-right:74px}
+.net-panel input{
+  width:100%;min-height:40px;border:1px solid var(--line);border-radius:8px;
+  padding:8px 10px;background:#f5f7f3;color:var(--ink);outline:0
+}
+.net-panel input:focus{box-shadow:0 0 0 2px #b8c8bb;border-color:#a9baad}
+.show-pass{
+  position:absolute;right:5px;top:4px;height:32px;border:0;border-radius:6px;
+  background:transparent;color:var(--green);font-size:12px;font-weight:600;cursor:pointer
+}
+.panel-actions{display:flex;gap:8px}
+.panel-actions .btn{flex:1;min-height:38px;font-size:13px;padding:8px 10px}
+.panel-actions .btn-danger{flex:0 0 auto;width:78px}
+.empty{padding:22px 8px;text-align:center;color:var(--muted);font-size:13px}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.field{margin-bottom:12px}
+.field:last-child{margin-bottom:0}
+.field label{display:block;font-size:13px;font-weight:600;margin-bottom:6px}
+.field input{
+  width:100%;min-height:42px;border:1px solid var(--line);border-radius:8px;
+  padding:9px 10px;background:#f5f7f3;color:var(--ink);outline:0
+}
+.field input:focus{box-shadow:0 0 0 2px #b8c8bb;border-color:#a9baad}
+.actions{display:flex;gap:8px;margin-top:14px}
+.actions .btn{flex:1}
+.note{font-size:11.5px;color:var(--muted);margin-top:7px}
+.toast{
+  position:fixed;left:50%;bottom:20px;transform:translateX(-50%);
+  background:var(--ink);color:#fff;padding:10px 14px;border-radius:8px;
+  font-size:12.5px;opacity:0;pointer-events:none;transition:opacity .2s;
+  z-index:30;max-width:calc(100% - 28px);text-align:center
+}
+.toast.show{opacity:1}
+@media (max-width:350px){
+  .wrap{padding-left:10px;padding-right:10px}
+  .form-grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand">
+      <div class="brand-mark">🌱</div>
+      <div>
+        <h1>Koneksi Wi-Fi</h1>
+        <p class="subtitle">Pilih jaringan untuk menghubungkan ESP8266 ke internet</p>
+      </div>
+    </div>
+    <div class="status-pill"><span class="dot off" id="statusDot"></span><span id="statusText">Memeriksa…</span></div>
+  </header>
+
+  <section class="card">
+    <div class="card-head">
+      <div>
+        <h2>Wi-Fi terdeteksi</h2>
+        <p>Jaringan di sekitar & yang sudah tersimpan. Ketuk untuk buka detail.</p>
+      </div>
+      <button class="btn-scan" id="scanBtn" type="button">
+        <span class="spin"></span><span class="scan-label">🔍 Pindai</span>
+      </button>
+    </div>
+    <div class="net-list" id="netList">
+      <div class="empty">Memuat jaringan…</div>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="card-head">
+      <div>
+        <h2>Tambah Wi-Fi manual</h2>
+        <p>Untuk jaringan tersembunyi (hidden SSID) atau yang tidak muncul di pemindaian.</p>
+      </div>
+    </div>
+    <form id="wifiForm">
+      <div class="form-grid">
+        <div class="field">
+          <label for="ssid">Nama Wi-Fi (SSID)</label>
+          <input id="ssid" type="text" maxlength="64" autocomplete="off" required placeholder="Contoh: WiFi Rumah">
+        </div>
+        <div class="field">
+          <label for="password">Password Wi-Fi</label>
+          <div class="password-wrap">
+            <input id="password" type="password" maxlength="64" autocomplete="off" placeholder="Masukkan password">
+            <button class="show-pass" id="showPass" type="button">Tampilkan</button>
+          </div>
+        </div>
+      </div>
+      <div class="note">Password hanya digunakan oleh ESP8266 untuk terhubung ke jaringan yang dipilih.</div>
+      <div class="actions">
+        <button class="btn btn-secondary" id="clearBtn" type="button">Bersihkan</button>
+        <button class="btn btn-primary" type="submit">Simpan Wi-Fi</button>
+      </div>
+    </form>
+  </section>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+"use strict";
+
+var API={
+  wifi:"/api/wifi",
+  wifiConnect:"/api/wifi/connect",
+  wifiScan:"/api/wifi/scan",
+  status:"/api/status"
+};
+
+// state.saved: daftar dari /api/wifi -> [{ssid,password,connected}]
+// state.scan: daftar dari /api/wifi/scan -> [{ssid,rssi,secure}]
+// state.merged: gabungan keduanya untuk ditampilkan
+// state.open: ssid yang sedang terbuka accordion-nya
+var state={saved:[],scan:[],merged:[],open:null,currentSsid:""};
+
+var els={
+  netList:document.getElementById("netList"),
+  scanBtn:document.getElementById("scanBtn"),
+  form:document.getElementById("wifiForm"),
+  ssid:document.getElementById("ssid"),
+  password:document.getElementById("password"),
+  showPass:document.getElementById("showPass"),
+  clearBtn:document.getElementById("clearBtn"),
+  toast:document.getElementById("toast"),
+  dot:document.getElementById("statusDot"),
+  status:document.getElementById("statusText")
+};
+
+function toast(t){
+  els.toast.textContent=t;els.toast.classList.add("show");
+  clearTimeout(toast.t);toast.t=setTimeout(function(){els.toast.classList.remove("show")},2200);
+}
+
+function fetchJson(url,options){
+  options=options||{};
+  return fetch(url,options).then(function(r){
+    if(!r.ok)throw new Error("HTTP "+r.status);
+    return r.json();
+  });
+}
+
+function togglePassword(input,button){
+  var show=input.type==="password";
+  input.type=show?"text":"password";
+  button.textContent=show?"Sembunyikan":"Tampilkan";
+}
+
+// ---------- Gabungkan hasil scan + daftar tersimpan ----------
+function mergeNetworks(){
+  var bySsid={};
+  state.scan.forEach(function(n){
+    bySsid[n.ssid]={ssid:n.ssid,rssi:n.rssi,secure:!!n.secure,saved:false,password:"",inRange:true};
+  });
+  state.saved.forEach(function(s){
+    if(bySsid[s.ssid]){
+      bySsid[s.ssid].saved=true;
+      bySsid[s.ssid].password=s.password||"";
+    } else {
+      bySsid[s.ssid]={ssid:s.ssid,rssi:null,secure:true,saved:true,password:s.password||"",inRange:false};
+    }
+  });
+  var list=Object.keys(bySsid).map(function(k){return bySsid[k]});
+  list.sort(function(a,b){
+    var aConn=a.ssid===state.currentSsid,bConn=b.ssid===state.currentSsid;
+    if(aConn!==bConn)return aConn?-1:1;
+    if(a.inRange!==b.inRange)return a.inRange?-1:1;
+    return (b.rssi==null?-999:b.rssi)-(a.rssi==null?-999:a.rssi);
+  });
+  state.merged=list;
+}
+
+// ---------- Ikon sinyal ----------
+function sigBars(rssi){
+  if(rssi==null)return 0;
+  if(rssi>=-60)return 4;
+  if(rssi>=-70)return 3;
+  if(rssi>=-80)return 2;
+  return 1;
+}
+function sigIcon(rssi){
+  var bars=sigBars(rssi),svg='<svg viewBox="0 0 20 16" fill="currentColor">';
+  for(var i=0;i<4;i++){
+    var h=4+i*3.6,x=i*5,y=16-h,on=i<bars;
+    svg+='<rect x="'+x+'" y="'+y+'" width="3.4" height="'+h+'" rx="1" opacity="'+(on?"1":".22")+'"></rect>';
+  }
+  return svg+"</svg>";
+}
+
+// ---------- Render daftar jaringan ----------
+function render(){
+  els.netList.innerHTML="";
+  if(!state.merged.length){
+    var e=document.createElement("div");e.className="empty";
+    e.textContent="Belum ada jaringan. Ketuk \"Pindai\" atau tambahkan manual di bawah.";
+    els.netList.appendChild(e);
+    return;
+  }
+  state.merged.forEach(function(net){
+    var isConnected=net.ssid===state.currentSsid;
+    var item=document.createElement("div");
+    item.className="net-item"+(isConnected?" connected":"")+(state.open===net.ssid?" open":"");
+
+    var head=document.createElement("button");head.type="button";head.className="net-head";
+    var sig=document.createElement("div");sig.className="sig";sig.innerHTML=sigIcon(net.rssi);
+    var info=document.createElement("div");info.className="net-info";
+    var name=document.createElement("div");name.className="net-name";
+    var nameText=document.createElement("span");nameText.textContent=net.ssid;
+    name.appendChild(nameText);
+    if(isConnected){
+      var b=document.createElement("span");b.className="badge live";b.textContent="Terhubung";name.appendChild(b);
+    } else if(net.saved){
+      var b2=document.createElement("span");b2.className="badge";b2.textContent="Tersimpan";name.appendChild(b2);
+    }
+    var meta=document.createElement("div");meta.className="net-meta";
+    meta.textContent=net.inRange?(net.rssi!=null?net.rssi+" dBm":"Terdeteksi"):"Tersimpan · di luar jangkauan";
+    info.appendChild(name);info.appendChild(meta);
+    var lock=document.createElement("div");lock.className="lock";lock.textContent=net.secure?"🔒":"";
+    var chev=document.createElement("div");chev.className="chevron";chev.textContent="›";
+    head.appendChild(sig);head.appendChild(info);head.appendChild(lock);head.appendChild(chev);
+    head.addEventListener("click",function(){
+      state.open=state.open===net.ssid?null:net.ssid;render();
+    });
+
+    item.appendChild(head);
+    item.appendChild(buildPanel(net,isConnected));
+    els.netList.appendChild(item);
+  });
+}
+
+function buildPanel(net,isConnected){
+  var panel=document.createElement("div");panel.className="net-panel";
+  if(state.open!==net.ssid)return panel;
+
+  var pwField=null;
+  if(net.secure){
+    var field=document.createElement("div");field.className="field";
+    var label=document.createElement("label");label.textContent="Password";
+    var wrap=document.createElement("div");wrap.className="password-wrap";
+    pwField=document.createElement("input");pwField.type="password";
+    pwField.value=net.password||"";
+    pwField.placeholder=net.saved?"":"Masukkan password";
+    var showBtn=document.createElement("button");showBtn.type="button";showBtn.className="show-pass";
+    showBtn.textContent="Tampilkan";
+    showBtn.addEventListener("click",function(){togglePassword(pwField,showBtn)});
+    wrap.appendChild(pwField);wrap.appendChild(showBtn);
+    field.appendChild(label);field.appendChild(wrap);
+    panel.appendChild(field);
+  }
+
+  var actions=document.createElement("div");actions.className="panel-actions";
+
+  var connectBtn=document.createElement("button");connectBtn.type="button";connectBtn.className="btn btn-primary";
+  connectBtn.textContent=isConnected?"Tersambung":(net.saved?"Hubungkan":"Simpan & Hubungkan");
+  if(isConnected)connectBtn.disabled=true;
+  connectBtn.addEventListener("click",function(){
+    var pw=pwField?pwField.value:"";
+    connectNetwork(net,pw,connectBtn);
+  });
+  actions.appendChild(connectBtn);
+
+  if(net.saved){
+    var delBtn=document.createElement("button");delBtn.type="button";delBtn.className="btn btn-danger";
+    delBtn.textContent="Hapus";
+    delBtn.addEventListener("click",function(){deleteNetwork(net,delBtn)});
+    actions.appendChild(delBtn);
+  }
+
+  panel.appendChild(actions);
+  return panel;
+}
+
+// ---------- Aksi: hubungkan (simpan dulu kalau belum tersimpan) ----------
+function connectNetwork(net,password,btn){
+  btn.disabled=true;var original=btn.textContent;btn.textContent="Menghubungkan…";
+
+  var ensureSaved=net.saved
+    ? Promise.resolve()
+    : fetchJson(API.wifi,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({ssid:net.ssid,password:password})})
+        .catch(function(){ /* lanjut coba connect meski gagal simpan */ });
+
+  ensureSaved.then(function(){
+    return fetchJson(API.wifiConnect,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({ssid:net.ssid,password:password})});
+  }).then(function(){
+    toast("Terhubung ke "+net.ssid);
+    loadAll();
+  }).catch(function(){
+    toast("Gagal terhubung ke "+net.ssid);
+  }).finally(function(){
+    btn.disabled=false;btn.textContent=original;
+  });
+}
+
+// ---------- Aksi: hapus Wi-Fi tersimpan ----------
+function deleteNetwork(net,btn){
+  if(!confirm('Hapus Wi-Fi "'+net.ssid+'" dari daftar tersimpan?'))return;
+  btn.disabled=true;
+  fetch(API.wifi+"?ssid="+encodeURIComponent(net.ssid),{method:"DELETE"})
+  .then(function(r){if(!r.ok)throw new Error("delete")})
+  .then(function(){
+    toast("Wi-Fi dihapus");
+    if(state.open===net.ssid)state.open=null;
+    loadAll();
+  })
+  .catch(function(){toast("Gagal menghapus Wi-Fi");btn.disabled=false});
+}
+
+// ---------- Muat data ----------
+function loadSaved(){
+  return fetchJson(API.wifi).then(function(data){
+    state.saved=Array.isArray(data)?data:(data.wifi||data.items||[]);
+  }).catch(function(){
+    state.saved=[];
+    toast("Data Wi-Fi tersimpan belum dapat dimuat");
+  });
+}
+function loadStatus(){
+  return fetchJson(API.status).then(function(data){
+    var connected=!!data.wifiConnected;
+    els.dot.classList.toggle("off",!connected);
+    els.status.textContent=connected?"Terhubung":"Belum terhubung";
+    state.currentSsid=data.ssid||(state.saved.find(function(x){return x.connected})||{}).ssid||"";
+  }).catch(function(){
+    els.dot.classList.add("off");els.status.textContent="Belum terhubung";
+  });
+}
+function loadAll(){
+  Promise.all([loadSaved(),loadStatus()]).then(function(){
+    mergeNetworks();render();
+  });
+}
+
+function runScan(){
+  els.scanBtn.disabled=true;els.scanBtn.classList.add("loading");
+  fetchJson(API.wifiScan)
+  .then(function(data){
+    if(data && data.scanning){
+      setTimeout(runScan,1200);
+      return;
+    }
+    var list=Array.isArray(data)?data:(data.networks||[]);
+    state.scan=list;
+    mergeNetworks();render();
+    els.scanBtn.disabled=false;els.scanBtn.classList.remove("loading");
+  })
+  .catch(function(){
+    toast("Gagal memindai Wi-Fi");
+    els.scanBtn.disabled=false;els.scanBtn.classList.remove("loading");
+  });
+}
+
+// ---------- Form tambah manual ----------
+els.showPass.addEventListener("click",function(){togglePassword(els.password,els.showPass)});
+els.clearBtn.addEventListener("click",function(){els.form.reset();els.ssid.focus()});
+els.scanBtn.addEventListener("click",runScan);
+
+els.form.addEventListener("submit",function(e){
+  e.preventDefault();
+  var ssid=els.ssid.value.trim(),password=els.password.value;
+  if(!ssid){toast("Nama Wi-Fi belum diisi");return}
+  var duplicate=state.saved.some(function(x){return x.ssid===ssid});
+  if(duplicate){toast("Wi-Fi ini sudah tersimpan");return}
+
+  var btn=els.form.querySelector('button[type="submit"]');
+  btn.disabled=true;
+  fetchJson(API.wifi,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({ssid:ssid,password:password})})
+  .then(function(){
+    toast("Wi-Fi berhasil disimpan");
+    els.form.reset();
+    loadAll();
+  })
+  .catch(function(){toast("Gagal menyimpan Wi-Fi")})
+  .finally(function(){btn.disabled=false});
+});
+
+loadAll();
+runScan();
+})();
+</script>
+</body>
+</html>
