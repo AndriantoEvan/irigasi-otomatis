@@ -1,107 +1,77 @@
-# 🌾 Sistem Irigasi Otomatis (Smart Automatic Irrigation System)
+# 🪴 Sistem Irigasi Otomatis IoT Solar-Powered
 
-![License](https://img.shields.io/github/license/AndriantoEvan/irigasi-otomatis?style=flat-square)
-![Forks](https://img.shields.io/github/forks/AndriantoEvan/irigasi-otomatis?style=flat-square)
-![Stars](https://img.shields.io/github/stars/AndriantoEvan/irigasi-otomatis?style=flat-square)
-![Issues](https://img.shields.io/github/issues/AndriantoEvan/irigasi-otomatis?style=flat-square)
-
-Sistem Irigasi Otomatis berbasis **Internet of Things (IoT)** dan **Mikrokontroler** yang dirancang untuk mengoptimalkan penggunaan air dan otomatisasi penyiraman tanaman berdasarkan kondisi kelembapan tanah real-time.
+Proyek sistem penyiraman tanaman otomatis berbasis **Internet of Things (IoT)** yang hemat energi dengan mekanisme *Modified Deep Sleep*, bertenaga mandiri dari panel surya (*Solar-Powered*), dilengkapi **Web Dashboard** interaktif yang di-host langsung (*self-hosted*) pada mikrokontroler, serta notifikasi *push real-time* via **ntfy**.
 
 ---
 
 ## 📌 Fitur Utama
 
-- 🌡️ **Monitoring Real-time**: Memantau tingkat kelembapan tanah, suhu, dan kondisi lingkungan secara akurat.
-- 🚰 **Penyiraman Otomatis**: Pompa air akan aktif/nonaktif secara otomatis berdasarkan ambang batas (*threshold*) kelembapan tanah.
-- 📱 **Integrasi IoT / Dashboard**: Pemantauan dan kontrol manual jarak jauh melalui antarmuka web atau aplikasi mobile.
-- ⚡ **Efisiensi Energi & Air**: Mengurangi pemborosan air dan konsumsi daya dengan sistem kendali terukur.
+- **Solar Powered & BMS:** Sistem catu daya mandiri menggunakan Solar Panel 5V/6V, baterai Li-ion 18650, modul *charger* TP4056 dengan *Battery Management System* (BMS), dan Step-Up MT3608.
+- **Manajemen Daya Hemat Energi (Modified Deep Sleep):** NodeMCU tidur secara presisi berdasarkan jadwal penyiraman berikutnya dan otomatis bangun via koneksi pin `D0` ke `RST`.
+- **Tombol Bangun Manual (Wake Button):** Tombol *push-button* fisik untuk mereset/membangunkan sistem secara manual kapan saja tanpa menunggu siklus *deep sleep* selesai.
+- **Web Dashboard Local (AP+STA Mode):** Dashboard kontrol dan konfigurasi jadwal di-host langsung dari ESP8266 (`ESP8266WebServer`) via hotspot Access Point internal (`WIFI_AP_STA`), tanpa membutuhkan server/cloud eksternal.
+- **Penyimpanan Konfigurasi Persisten:** Jadwal dan konfigurasi sistem disimpan di *flash memory* internal ESP8266 menggunakan **LittleFS/EEPROM**.
+- **Sinkronisasi Waktu Akurat:** Sinkronisasi jam otomatis via **NTP Client**.
+- **Notifikasi Push via ntfy:** Mengirimkan laporan status penyiraman langsung ke aplikasi Android via HTTP POST tanpa perantara *backend*.
+- **Keamanan & Proteksi Hardware:** Fitur *Dry-Run Protection* untuk mencegah kerusakan pompa submersible saat kekurangan air.
 
 ---
 
-## 🛠️ Komponen & Perangkat Keras
+## 🛠️ Modul & Komponen Hardware
 
-Berikut adalah perangkat keras yang umum digunakan dalam proyek ini:
-
-| Komponen | Deskripsi |
-| :--- | :--- |
-| **Mikrokontroler** | ESP32 / ESP8266 / Arduino Uno |
-| **Sensor** | Soil Moisture Sensor (Capacitive/Resistive), DHT11/DHT22 |
-| **Actuator** | Relay Module (1-Channel / 2-Channel) |
-| **Output** | Mini Water Pump DC (5V/12V), Solenoid Valve |
-| **Catu Daya** | Adapter 5V/12V DC atau Panel Surya |
-
----
-
-## 🏗️ Arsitektur & Cara Kerja
-
-1. **Pembacaan Data Sensor**: Sensor membaca kelembapan tanah dan mengirimkan nilai analog/digital ke mikrokontroler.
-2. **Pengolahan Data**: Mikrokontroler memproses data berdasarkan kriteria logika yang telah ditentukan:
-   - Jika `Kelembapan Tanah < Threshold Minimum` ➡️ **Pompa ON**
-   - Jika `Kelembapan Tanah >= Threshold Maksimum` ➡️ **Pompa OFF**
-3. **Konektivitas Cloud / IoT**: Data dikirimkan ke cloud platform (seperti Blynk, ThingsBoard, atau MQTT Broker) untuk pemantauan jarak jauh.
+| No | Komponen | Deskripsi / Spesifikasi |
+|---|---|---|
+| 1 | **NodeMCU ESP8266 v3** | Mikrokontroler utama berbasis Wi-Fi |
+| 2 | **Solar Panel Mini 5V/6V** | Sumber pengisian daya utama dari sinar matahari |
+| 3 | **Modul TP4056 BMS** | Charger baterai Li-ion dengan proteksi *over-charge* & *over-discharge* (IC DW01+FS8205) |
+| 4 | **Baterai Li-ion 18650** | Penyimpan daya sistem |
+| 5 | **Modul Step-Up MT3608** | Penaik tegangan baterai ke 5.0V stabil |
+| 6 | **Modul Relay 1 Channel 5V** | Sakelar elektronik sakelar daya pompa (Active LOW) |
+| 7 | **Mini Submersible Pump 5V** | Aktuator penyiram air |
+| 8 | **Push-Button** | Tombol pemicu bangun manual (Manual Wake Button) |
+| 9 | **Casing Waterproof (Box IP65)** | Pelindung rangkaian elektronik dari panas dan hujan |
 
 ---
 
-## 🚀 Panduan Memulai (*Getting Started*)
+## 🔌 Panduan Skematik & Sambungan Kabel (Wiring Map)
 
-### 1. Persyaratan Sistem
-- [Arduino IDE](https://www.arduino.cc/en/software) (versi terbaru disarankan)
-- Driver USB Serial sesuai mikrokontroler (CH340 / CP2102)
-- Board Manager & Library terkait (misal: `ESP8266WiFi`, `Blynk`, `DHT sensor library`)
+> ⚠️ **PENTING SEBELUM DIBERI DAYA:** Putar potensio pada modul MT3608 dan ukur menggunakan multimeter hingga tegangan output **VOUT+ / VOUT-** terbaca tepat **5.0V** menggunakan sumber USB 5V sebelum menyambungkan ke NodeMCU!
 
-### 2. Langkah Instalasi
+### 1. Sistem Daya (Solar Panel → Baterai → Regulated Output)
+* `Solar Panel (+)` ➔ `TP4056 IN(+)`
+* `Solar Panel (-)` ➔ `TP4056 IN(-)`
+* `TP4056 BAT(+)` ➔ `Baterai 18650 (+)` **DAN** `MT3608 VIN(+)`
+* `TP4056 BAT(-)` ➔ `Baterai 18650 (-)` **DAN** `MT3608 VIN(-)`
 
-1. **Clone Repositori**
+### 2. Sistem Kontrol & Aktuator
+* `MT3608 VOUT(+)` (5.0V) ➔ NodeMCU `VIN`, Relay `VCC`, dan Relay `COM`
+* `MT3608 VOUT(-)` (GND) ➔ NodeMCU `GND`, Relay `GND`, dan Kabel (-) Pompa Air
+* `NodeMCU Pin D7` ➔ Relay Pin `IN`
+* `Relay Pin NO` ➔ Kabel (+) Pompa Air
+
+### 3. Jalur Deep Sleep & Tombol Manual
+* `NodeMCU Pin D0` ➔ `NodeMCU Pin RST` *(Sambungan pendek pada board)*
+* `Tombol Kaki 1` ➔ `NodeMCU Pin RST`
+* `Tombol Kaki 2` ➔ `GND`
+
+---
+
+## 💻 Kebutuhan Software & Library
+
+- **Arduino IDE** (Versi terbaru)
+- **ESP8266 Board Package** (`http://arduino.esp8266.com/stable/package_esp8266com_index.json`)
+- **Driver CH340** (Untuk komunikasi USB NodeMCU)
+- **Library Arduino (Wajib):**
+  - `WiFiManager` (by tzapu)
+  - `NTPClient` (by Fabrice Weinberg)
+  - `ArduinoJson` (by Benoit Blanchon)
+  - `ESP8266WiFi`, `ESP8266WebServer`, `ESP8266HTTPClient`, `LittleFS` *(Bawaan board package)*
+
+---
+
+## 🚀 Panduan Memulai (Getting Started)
+
+1. **Clone Repositori:**
    ```bash
-   git clone https://github.com/AndriantoEvan/irigasi-otomatis.git
+   git clone [https://github.com/AndriantoEvan/irigasi-otomatis.git](https://github.com/AndriantoEvan/irigasi-otomatis.git)
    cd irigasi-otomatis
-   ```
-
-2. **Buka Kode Program**
-   Buka file `.ino` utama menggunakan Arduino IDE.
-
-3. **Pengaturan Konfigurasi**
-   Kustomisasi kredensial Wi-Fi, token API/IoT, dan batas kelembapan (*threshold*) pada kode program:
-   ```cpp
-   const char* ssid = "NAMA_WIFI_ANDA";
-   const char* password = "PASSWORD_WIFI_ANDA";
-   int thresholdDry = 300; // Sesuaikan dengan hasil kalibrasi sensor
-   ```
-
-4. **Upload Program**
-   Sambungkan board ke PC/Laptop, pilih Board dan Port yang sesuai, lalu klik **Upload**.
-
----
-
-## 📸 Skema Rangkaian (*Wiring Diagram*)
-
-*(Anda dapat menambahkan gambar skema pinout/sirkuit di sini)*
-
-```text
-[ Soil Moisture Sensor ] ---> Analog Pin (A0)
-[ Relay Module ]         ---> Digital Pin (D2) ---> [ Water Pump ]
-[ DHT11 Sensor ]         ---> Digital Pin (D4)
-```
-
----
-
-## 🤝 Kontribusi
-
-Kontribusi selalu terbuka! Jika Anda memiliki saran, perbaikan bug, atau penambahan fitur baru:
-
-1. Fork repositori ini.
-2. Buat branch fitur baru (`git checkout -b feature/FiturBaru`).
-3. Commit perubahan Anda (`git commit -m 'Menambahkan FiturBaru'`).
-4. Push ke branch tersebut (`git push origin feature/FiturBaru`).
-5. Buat **Pull Request**.
-
----
-
-## 📄 Lisensi
-
-Proyek ini dilindungi di bawah lisensi [MIT](LICENSE) - lihat file LICENSE untuk detail lebih lanjut.
-
----
-
-### 👨‍💻 Pengembang
-Dibuat oleh [Andrianto Evan](https://github.com/AndriantoEvan).
